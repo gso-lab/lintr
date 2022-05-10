@@ -23,7 +23,7 @@ trailing_whitespace_linter <- function(allow_empty_lines = FALSE) {
       bad_lines <- which(!is.na(res$start))
     }
 
-    lapply(
+    trailing <- lapply(
       bad_lines,
       function(line) {
         Lint(
@@ -37,5 +37,30 @@ trailing_whitespace_linter <- function(allow_empty_lines = FALSE) {
         )
       }
     )
+
+    res <- re_matches(
+      source_expression$file_lines,
+      rex(list(non_space, space %if_prev_isnt% "#'", space)),
+      location = TRUE
+    )
+
+    bad_lines <- which(!is.na(res$start))
+
+    multiples <- lapply(
+      bad_lines,
+      function(line) {
+        Lint(
+          filename = source_expression$filename,
+          line_number = line,
+          column_number = res$start[[line]],
+          type = "style",
+          message = "Spaces should never be multiple, except when indenting lines.",
+          line = source_expression$file_lines[[line]],
+          ranges = list(c(res$start[[line]], res$end[[line]]))
+        )
+      }
+    )
+
+    return(c(trailing, multiples))
   })
 }

@@ -30,9 +30,11 @@ commas_linter <- function() {
 
           comma_loc <- start + re_matches(substr(line, start, end), rex(","), locations = TRUE)$start - 1L
 
+          open_bracket <- substr(line, comma_loc - 2L, comma_loc - 2L) %==% "["
+
           space_before <- substr(line, comma_loc - 1L, comma_loc - 1L) %==% " "
 
-          if (space_before) {
+          if (!open_bracket && space_before) {
 
             comma_loc_filter <- source_expression$parsed_content$line1 == line_number &
               source_expression$parsed_content$col1 == comma_loc
@@ -70,7 +72,7 @@ commas_linter <- function() {
                 line_number = line_number,
                 column_number = comma_loc,
                 type = "style",
-                message = "Commas should never have a space before.",
+                message = "Commas should never have a space before unless directly preceded by an opening bracket.",
                 line = line,
                 ranges = list(c(start, end))
               )

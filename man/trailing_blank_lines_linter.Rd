@@ -4,7 +4,7 @@
 \alias{trailing_blank_lines_linter}
 \title{Trailing blank lines linter}
 \usage{
-trailing_blank_lines_linter()
+trailing_blank_lines_linter(terminal_newline = TRUE)
 }
 \description{
 Check that there are no trailing blank lines in source code.

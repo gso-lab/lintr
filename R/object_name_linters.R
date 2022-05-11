@@ -19,6 +19,61 @@ object_name_xpath <- local({
   )
 })
 
+function_name_xpath <- local({
+  xp_assignment_target <- paste(
+    "not(preceding-sibling::OP-DOLLAR)",
+    "and ancestor::expr[",
+    " following-sibling::LEFT_ASSIGN",
+    " or preceding-sibling::RIGHT_ASSIGN",
+    " or following-sibling::EQ_ASSIGN",
+    "]",
+    "and not(ancestor::expr[",
+    " preceding-sibling::OP-LEFT-BRACKET",
+    " or preceding-sibling::LBB",
+    "])"
+  )
+
+  paste0(
+    "//expr[expr/FUNCTION/text() = 'function']/expr/SYMBOL[", xp_assignment_target, "] | ",
+    "//expr_or_assign_or_help[expr/FUNCTION/text() = 'function']/expr/SYMBOL[", xp_assignment_target, "] |",
+    "//expr[FUNCTION/text() = 'function']/expr/expr/SYMBOL[", xp_assignment_target, "]"
+  )
+})
+
+global_name_xpath <- local({
+  xp_assignment_target <- paste(
+    "ancestor::expr/expr/*[substring-after(name(), 'CONS')]",
+    " or ancestor::expr/expr/expr/SYMBOL_FUNCTION_CALL[text() = 'c'][ancestor::expr/expr/expr/*[substring-after(name(), 'CONS')]]"
+  )
+
+  paste0(
+    "/exprlist/expr/expr/SYMBOL[", xp_assignment_target, "]"
+  )
+})
+
+variable_name_xpath <- local({
+  xp_assignment_target <- paste(
+    "not(preceding-sibling::OP-DOLLAR)",
+    "and ancestor::expr[",
+    " following-sibling::LEFT_ASSIGN",
+    " or (preceding-sibling::RIGHT_ASSIGN and not(preceding-sibling::expr/OP-RIGHT-BRACE))",
+    " or following-sibling::EQ_ASSIGN",
+    "]",
+    "and not(ancestor::expr[",
+    " preceding-sibling::OP-LEFT-BRACKET",
+    " or preceding-sibling::LBB",
+    " or (following-sibling::expr/FUNCTION[text() = 'function'] and following-sibling::expr/expr/OP-RIGHT-BRACE)",
+    "])",
+    "and not(", global_name_xpath, ")"
+  )
+
+  paste0(
+    "//SYMBOL[", xp_assignment_target, "] | ",
+    "//STR_CONST[", xp_assignment_target, "] | ",
+    "//SYMBOL_FORMALS"
+  )
+})
+
 #' Object name linter
 #'
 #' Check that object names conform to a naming style.
@@ -44,6 +99,171 @@ object_name_linter <- function(styles = c("snake_case", "symbols")) {
     xml <- source_expression$full_xml_parsed_content
 
     assignments <- xml2::xml_find_all(xml, object_name_xpath)
+
+    # Retrieve assigned name
+    nms <- strip_names(
+      xml2::xml_text(assignments)
+    )
+
+    generics <- c(
+      declared_s3_generics(xml),
+      imported_s3_generics(namespace_imports(find_package(source_expression$filename)))$fun,
+      .base_s3_generics
+    )
+    generics <- unique(generics[nzchar(generics)])
+
+    style_matches <- lapply(styles, function(style) {
+      check_style(nms, style, generics)
+    })
+
+    matches_a_style <- Reduce(`|`, style_matches)
+
+    lapply(
+      assignments[!matches_a_style],
+      xml_nodes_to_lint,
+      source_expression,
+      lint_message = lint_message,
+      type = "style",
+      global = TRUE
+    )
+  })
+}
+
+#' Function name linter
+#'
+#' Check that function names conform to a naming style.
+#' The default naming styles is "camelCase".
+#'
+#' @param styles A subset of
+#'   \Sexpr[stage=render, results=rd]{lintr:::regexes_rd}. A name should
+#'   match at least one of these styles.
+#' @evalRd rd_tags("function_name_linter")
+#' @seealso [linters] for a complete list of linters available in lintr.
+#' @export
+function_name_linter <- function(styles = c("camelCase")) {
+  styles <- match.arg(styles, names(style_regexes), several.ok = TRUE)
+
+  lint_message <- paste0(
+    "Function name style should be ",
+    glue::glue_collapse(styles, sep = ", ", last = " or "), "."
+  )
+
+  Linter(function(source_expression) {
+    if (is.null(source_expression$full_xml_parsed_content)) return(list())
+
+    xml <- source_expression$full_xml_parsed_content
+
+    assignments <- xml2::xml_find_all(xml, function_name_xpath)
+
+    # Retrieve assigned name
+    nms <- strip_names(
+      xml2::xml_text(assignments)
+    )
+
+    generics <- c(
+      declared_s3_generics(xml),
+      imported_s3_generics(namespace_imports(find_package(source_expression$filename)))$fun,
+      .base_s3_generics
+    )
+    generics <- unique(generics[nzchar(generics)])
+
+    style_matches <- lapply(styles, function(style) {
+      check_style(nms, style, generics)
+    })
+
+    matches_a_style <- Reduce(`|`, style_matches)
+
+    lapply(
+      assignments[!matches_a_style],
+      xml_nodes_to_lint,
+      source_expression,
+      lint_message = lint_message,
+      type = "style",
+      global = TRUE
+    )
+  })
+}
+
+#' Variable name linter
+#'
+#' Check that non-global and non-function object names conform to a naming style.
+#' The default naming styles are either of "snake_case" or "dotted.case".
+#'
+#' @param styles A subset of
+#'   \Sexpr[stage=render, results=rd]{lintr:::regexes_rd}. A name should
+#'   match at least one of these styles.
+#' @evalRd rd_tags("variable_name_linter")
+#' @seealso [linters] for a complete list of linters available in lintr.
+#' @export
+variable_name_linter <- function(styles = c("snake_case", "dotted.case")) {
+  styles <- match.arg(styles, names(style_regexes), several.ok = TRUE)
+
+  lint_message <- paste0(
+    "Variable name style should be ",
+    glue::glue_collapse(styles, sep = ", ", last = " or "), "."
+  )
+
+  Linter(function(source_expression) {
+    if (is.null(source_expression$full_xml_parsed_content)) return(list())
+
+    xml <- source_expression$full_xml_parsed_content
+
+    assignments <- xml2::xml_find_all(xml, variable_name_xpath)
+
+    # Retrieve assigned name
+    nms <- strip_names(
+      xml2::xml_text(assignments)
+    )
+
+    generics <- c(
+      declared_s3_generics(xml),
+      imported_s3_generics(namespace_imports(find_package(source_expression$filename)))$fun,
+      .base_s3_generics
+    )
+    generics <- unique(generics[nzchar(generics)])
+
+    style_matches <- lapply(styles, function(style) {
+      check_style(nms, style, generics)
+    })
+
+    matches_a_style <- Reduce(`|`, style_matches)
+
+    lapply(
+      assignments[!matches_a_style],
+      xml_nodes_to_lint,
+      source_expression,
+      lint_message = lint_message,
+      type = "style",
+      global = TRUE
+    )
+  })
+}
+
+#' Global variable name linter
+#'
+#' Check that global variable/object names conform to a naming style.
+#' The default naming styles are either of "SNAKE_CASE" or "DOTTED.CASE".
+#'
+#' @param styles A subset of
+#'   \Sexpr[stage=render, results=rd]{lintr:::regexes_rd}. A name should
+#'   match at least one of these styles.
+#' @evalRd rd_tags("global_name_linter")
+#' @seealso [linters] for a complete list of linters available in lintr.
+#' @export
+global_name_linter <- function(styles = c("SNAKE_CASE", "DOTTED.CASE")) {
+  styles <- match.arg(styles, names(style_regexes), several.ok = TRUE)
+
+  lint_message <- paste0(
+    "Global variable name style should be ",
+    glue::glue_collapse(styles, sep = ", ", last = " or "), "."
+  )
+
+  Linter(function(source_expression) {
+    if (is.null(source_expression$full_xml_parsed_content)) return(list())
+
+    xml <- source_expression$full_xml_parsed_content
+
+    assignments <- xml2::xml_find_all(xml, global_name_xpath)
 
     # Retrieve assigned name
     nms <- strip_names(
@@ -134,6 +354,7 @@ style_regexes <- list(
   "snake_case"  = rex(start, maybe("."), some_of(lower, digit), any_of("_", lower, digit), end),
   "SNAKE_CASE"  = rex(start, maybe("."), some_of(upper, digit), any_of("_", upper, digit), end),
   "dotted.case" = rex(start, maybe("."), one_or_more(loweralnum), zero_or_more(dot, one_or_more(loweralnum)), end),
+  "DOTTED.CASE" = rex(start, maybe("."), one_or_more(upperalnum), zero_or_more(dot, one_or_more(upperalnum)), end),
   "lowercase"   = rex(start, maybe("."), one_or_more(loweralnum), end),
   "UPPERCASE"   = rex(start, maybe("."), one_or_more(upperalnum), end)
 )

@@ -37,6 +37,7 @@ default_linters <- with_defaults(
   T_and_F_symbol_linter(),
   trailing_blank_lines_linter(),
   trailing_whitespace_linter(),
+  unneeded_concatenation_linter(),
   vector_logic_linter()
 )
 

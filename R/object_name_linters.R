@@ -349,7 +349,7 @@ upperalnum <- rex(one_of(upper, digit))
 
 style_regexes <- list(
   "symbols"     = rex(start, zero_or_more(none_of(alnum)), end),
-  "CamelCase"   = rex(start, maybe("."), upper, zero_or_more(alnum), end),
+  "PascalCase"  = rex(start, maybe("."), upper, zero_or_more(alnum), end),
   "camelCase"   = rex(start, maybe("."), lower, zero_or_more(alnum), end),
   "snake_case"  = rex(start, maybe("."), some_of(lower, digit), any_of("_", lower, digit), end),
   "SNAKE_CASE"  = rex(start, maybe("."), some_of(upper, digit), any_of("_", upper, digit), end),

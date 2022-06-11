@@ -10,7 +10,7 @@ op_types <- c(
 
 #' Undesirable operator linter
 #'
-#' Report the use of undesirable operators, e.g. [`:::`][base::ns-dblcolon] or
+#' Report the use of undesirable operators, e.g. [`:::`][] or
 #' [`<<-`][base::assignOps] and suggest an alternative.
 #'
 #' @param op Named character vector, where the names are the names of the undesirable operators, and the values are

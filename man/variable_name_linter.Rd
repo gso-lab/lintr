@@ -18,3 +18,6 @@ The default naming styles are either of "snake_case" or "dotted.case".
 \seealso{
 \link{linters} for a complete list of linters available in lintr.
 }
+\section{Tags}{
+\link[=configurable_linters]{configurable}, \link[=consistency_linters]{consistency}, \link[=default_linters]{default}, \link[=style_linters]{style}
+}

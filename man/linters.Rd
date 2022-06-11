@@ -17,18 +17,18 @@ see also \code{\link[=available_tags]{available_tags()}}.
 \section{Tags}{
 The following tags exist:
 \itemize{
-\item{\link[=best_practices_linters]{best_practices} (34 linters)}
+\item{\link[=best_practices_linters]{best_practices} (35 linters)}
 \item{\link[=common_mistakes_linters]{common_mistakes} (5 linters)}
-\item{\link[=configurable_linters]{configurable} (18 linters)}
-\item{\link[=consistency_linters]{consistency} (16 linters)}
+\item{\link[=configurable_linters]{configurable} (21 linters)}
+\item{\link[=consistency_linters]{consistency} (19 linters)}
 \item{\link[=correctness_linters]{correctness} (7 linters)}
-\item{\link[=default_linters]{default} (24 linters)}
+\item{\link[=default_linters]{default} (28 linters)}
 \item{\link[=deprecated_linters]{deprecated} (4 linters)}
 \item{\link[=efficiency_linters]{efficiency} (14 linters)}
 \item{\link[=package_development_linters]{package_development} (14 linters)}
-\item{\link[=readability_linters]{readability} (35 linters)}
+\item{\link[=readability_linters]{readability} (36 linters)}
 \item{\link[=robustness_linters]{robustness} (12 linters)}
-\item{\link[=style_linters]{style} (35 linters)}
+\item{\link[=style_linters]{style} (39 linters)}
 }
 }
 \section{Linters}{
@@ -43,6 +43,7 @@ The following linters exist:
 \item{\code{\link{class_equals_linter}} (tags: best_practices, consistency, robustness)}
 \item{\code{\link{closed_curly_linter}} (tags: configurable, deprecated, readability, style)}
 \item{\code{\link{commas_linter}} (tags: default, readability, style)}
+\item{\code{\link{comment_linter}} (tags: best_practices, default, readability, style)}
 \item{\code{\link{commented_code_linter}} (tags: best_practices, default, readability, style)}
 \item{\code{\link{condition_message_linter}} (tags: best_practices, consistency)}
 \item{\code{\link{conjunct_test_linter}} (tags: best_practices, package_development, readability)}
@@ -62,6 +63,8 @@ The following linters exist:
 \item{\code{\link{expect_type_linter}} (tags: best_practices, package_development)}
 \item{\code{\link{extraction_operator_linter}} (tags: best_practices, style)}
 \item{\code{\link{function_left_parentheses_linter}} (tags: default, readability, style)}
+\item{\code{\link{function_name_linter}} (tags: configurable, consistency, default, style)}
+\item{\code{\link{global_name_linter}} (tags: configurable, consistency, default, style)}
 \item{\code{\link{ifelse_censor_linter}} (tags: best_practices, efficiency)}
 \item{\code{\link{implicit_integer_linter}} (tags: best_practices, consistency, style)}
 \item{\code{\link{infix_spaces_linter}} (tags: default, readability, style)}
@@ -105,6 +108,7 @@ The following linters exist:
 \item{\code{\link{undesirable_operator_linter}} (tags: best_practices, configurable, efficiency, robustness, style)}
 \item{\code{\link{unneeded_concatenation_linter}} (tags: efficiency, readability, style)}
 \item{\code{\link{unreachable_code_linter}} (tags: best_practices, readability)}
+\item{\code{\link{variable_name_linter}} (tags: configurable, consistency, default, style)}
 \item{\code{\link{vector_logic_linter}} (tags: best_practices, default, efficiency)}
 \item{\code{\link{yoda_test_linter}} (tags: best_practices, package_development, readability)}
 }

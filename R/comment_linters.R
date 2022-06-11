@@ -106,7 +106,7 @@ comment_linter <- function() {
           )
       ),
       global = FALSE, locations = TRUE)
-    browser()
+    # browser()
     lapply(rownames(na.omit(code_candidates)), function(code_candidate) {
       is_parsable <- parsable(code_candidates[code_candidate, "code"])
       if (is_parsable) {

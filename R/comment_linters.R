@@ -93,20 +93,9 @@ comment_linter <- function() {
     all_comments <- xml2::xml_text(all_comment_nodes)
     code_candidates <- re_matches(
       all_comments,
-      rex(some_of("#"), any_spaces,
-          capture(name = "code",
-                  # except("'"),
-                  anything,
-                  or(some_of("{}[]"), # code-like parentheses
-                     or(ops), # any operator
-                     group(graphs, "(", anything, ")"), # a function call
-                     group("!", alphas) # a negation
-                  ),
-                  anything
-          )
-      ),
+      rex(regex("(?<!#)#(?!#)(?!')"), any_spaces, capture(name = "code", anything)),
       global = FALSE, locations = TRUE)
-    # browser()
+
     lapply(rownames(na.omit(code_candidates)), function(code_candidate) {
       is_parsable <- parsable(code_candidates[code_candidate, "code"])
       if (is_parsable) {
@@ -119,7 +108,7 @@ comment_linter <- function() {
           line_number = line_number,
           column_number = column_offset + code_candidates[code_candidate, "code.start"],
           type = "style",
-          message = "Commented code should be removed.",
+          message = "All comments should be `## ` except roxygen comments which are `#' `.",
           line = source_expression$file_lines[line_number],
           ranges = list(column_offset + c(code_candidates[code_candidate, "code.start"],
                                           code_candidates[code_candidate, "code.end"]))

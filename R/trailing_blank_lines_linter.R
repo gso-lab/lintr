@@ -58,7 +58,7 @@ trailing_blank_lines_linter <- function(terminal_newline = TRUE) {
       if (identical(source_expression$terminal_newline, TRUE)) { # could use isTRUE, but needs backports
         last_line <- tail(source_expression$file_lines, 1L)
 
-        if (gsub(" ", "", last_line) == "") {
+        if (last_line != "}") {
           lints[[length(lints) + 1L]] <- Lint(
             filename = source_expression$filename,
             line_number = length(source_expression$file_lines) + 1,

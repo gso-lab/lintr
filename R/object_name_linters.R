@@ -153,12 +153,47 @@ function_name_linter <- function(styles = c("camelCase")) {
 
     xml <- source_expression$full_xml_parsed_content
 
-    assignments <- xml2::xml_find_all(xml, function_name_xpath)
+    arrow_assignments <- xml2::xml_find_all(xml, function_name_xpath)
+    assigns <- xml2::xml_find_all(
+      xml,
+      "//expr[expr[SYMBOL_FUNCTION_CALL[text() = 'assign']]]/expr[2]"
+    )
+    generic_or_std <- xml2::xml_find_all(
+      xml,
+      "//expr[expr[SYMBOL_FUNCTION_CALL[text() = 'setGeneric' or text() = 'standardGeneric']]]/expr[2]"
+    )
+    method_f <- xml2::xml_find_all(
+      xml,
+      "//expr[expr[SYMBOL_FUNCTION_CALL[text() = 'setMethod']]]/expr[2]"
+    )
+    method_def <- xml2::xml_find_all(
+      xml,
+      "//expr[expr[SYMBOL_FUNCTION_CALL[text() = 'setMethod']]]/expr[4]"
+    )
 
     # Retrieve assigned name
-    nms <- strip_names(
-      xml2::xml_text(assignments)
+    arrow_nms <- strip_names(xml2::xml_text(arrow_assignments))
+    assign_nms <- strip_names(xml2::xml_text(assigns))
+    generic_nms <- strip_names(xml2::xml_text(generic_or_std))
+    method_nms <- stats::setNames(strip_names(xml2::xml_text(method_def)), strip_names(xml2::xml_text(method_f)))
+
+    # remove method dispatch if setGeneric or setMethod exists
+    keeps <- !arrow_nms %in% unname(method_nms)
+    arrow_assignments <- arrow_assignments[keeps]
+    arrow_nms <- arrow_nms[keeps]
+    keeps <- !assign_nms %in% unname(method_nms)
+    assigns <- assigns[keeps]
+    assign_nms <- assign_nms[keeps]
+    dispatches <- sapply(
+      names(method_nms), function(nm) {
+        if (nm %in% generic_nms) return(strsplit(method_nms[nm], "\\.")[[1]][1]) else return(method_nms[nm])
+      },
+      simplify = TRUE, USE.NAMES = FALSE
     )
+
+    # remove dupes
+    ass <- c(arrow_assignments, assigns, generic_or_std, method_def)
+    nms <- c(arrow_nms, assign_nms, generic_nms, dispatches)
 
     generics <- c(
       declared_s3_generics(xml),
@@ -174,7 +209,7 @@ function_name_linter <- function(styles = c("camelCase")) {
     matches_a_style <- Reduce(`|`, style_matches)
 
     lapply(
-      assignments[!matches_a_style],
+      ass[!matches_a_style],
       xml_nodes_to_lint,
       source_expression,
       lint_message = lint_message,
@@ -264,11 +299,20 @@ global_name_linter <- function(styles = c("SNAKE_CASE", "DOTTED.CASE")) {
     xml <- source_expression$full_xml_parsed_content
 
     assignments <- xml2::xml_find_all(xml, global_name_xpath)
-
     # Retrieve assigned name
     nms <- strip_names(
       xml2::xml_text(assignments)
     )
+
+    # remove setMethod function definitions from results
+    method_def <- xml2::xml_find_all(
+      xml,
+      "//expr[expr[SYMBOL_FUNCTION_CALL[text() = 'setMethod']]]/expr[4]"
+    )
+    method_nms <- strip_names(xml2::xml_text(method_def))
+    keeps <- !nms %in% method_nms
+    nms <- nms[keeps]
+    assignments <- assignments[keeps]
 
     generics <- c(
       declared_s3_generics(xml),

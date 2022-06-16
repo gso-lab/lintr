@@ -97,23 +97,20 @@ comment_linter <- function() {
       global = FALSE, locations = TRUE)
 
     lapply(rownames(na.omit(code_candidates)), function(code_candidate) {
-      is_parsable <- parsable(code_candidates[code_candidate, "code"])
-      if (is_parsable) {
-        comment_node <- all_comment_nodes[[as.integer(code_candidate)]]
-        line_number <- as.integer(xml2::xml_attr(comment_node, "line1"))
-        column_offset <- as.integer(xml2::xml_attr(comment_node, "col1")) - 1L
+      comment_node <- all_comment_nodes[[as.integer(code_candidate)]]
+      line_number <- as.integer(xml2::xml_attr(comment_node, "line1"))
+      column_offset <- as.integer(xml2::xml_attr(comment_node, "col1")) - 1L
 
-        Lint(
-          filename = source_expression$filename,
-          line_number = line_number,
-          column_number = column_offset + code_candidates[code_candidate, "code.start"],
-          type = "style",
-          message = "All comments should be `## ` except roxygen comments which are `#' `.",
-          line = source_expression$file_lines[line_number],
-          ranges = list(column_offset + c(code_candidates[code_candidate, "code.start"],
-                                          code_candidates[code_candidate, "code.end"]))
-        )
-      }
+      Lint(
+        filename = source_expression$filename,
+        line_number = line_number,
+        column_number = column_offset + code_candidates[code_candidate, "code.start"],
+        type = "style",
+        message = "All comments should be `## ` except roxygen comments which are `#' `.",
+        line = source_expression$file_lines[line_number],
+        ranges = list(column_offset + c(code_candidates[code_candidate, "code.start"],
+                                        code_candidates[code_candidate, "code.end"]))
+      )
     })
   })
 }
